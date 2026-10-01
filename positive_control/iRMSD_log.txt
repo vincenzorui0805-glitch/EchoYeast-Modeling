@@ -1,0 +1,27 @@
+load E:/HADDOCK2.5/9VH4_orig_4802.pdb, orig
+load E:/HADDOCK2.5/772885-9VH4/cluster1_1.pdb, rd
+align rd and chain A, orig and chain A+B
+python
+from pymol import cmd
+import math
+coords_rd = []
+coords_orig = []
+cmd.iterate_state(1, "rd and chain B and name CA", "coords_rd.append((x,y,z))", space={'coords_rd': coords_rd})
+cmd.iterate_state(1, "orig and chain C and name CA", "coords_orig.append((x,y,z))", space={'coords_orig': coords_orig})
+n = min(len(coords_rd), len(coords_orig))
+s = 0.0
+for i in range(n):
+    dx = coords_rd[i][0] - coords_orig[i][0]
+    dy = coords_rd[i][1] - coords_orig[i][1]
+    dz = coords_rd[i][2] - coords_orig[i][2]
+    s += dx*dx + dy*dy + dz*dz
+print("=" * 50)
+print("Positive Control 9VH4 Redocking - i-RMSD")
+print("=" * 50)
+print("Receptor alignment RMSD: 0.349 A (3393 atoms)")
+print("rd CA:", len(coords_rd), " orig CA:", len(coords_orig))
+print("i-RMSD = %.3f A" % math.sqrt(s/n))
+print("=" * 50)
+python end
+save E:/HADDOCK2.5/772885-9VH4/alignment_orig_vs_rd.pse
+log_close

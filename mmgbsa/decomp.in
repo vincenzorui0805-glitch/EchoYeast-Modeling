@@ -1,0 +1,15 @@
+&general
+  startframe = 1,
+  endframe = 51,
+  interval = 1,
+  verbose = 2,
+  keep_files = 0,
+/
+&gb
+  igb = 5,
+  saltcon = 0.150,
+/
+&decomp
+  idecomp = 1,
+  dec_verbose = 3,
+/
