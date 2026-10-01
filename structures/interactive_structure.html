@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>R1aB6-H1N1 结合界面 3D 交互图</title>
+    <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f8f9fa;
+        }
+        h2 {
+            color: #2c3e50;
+        }
+        #viewer {
+            width: 100%;
+            max-width: 900px;
+            height: 550px;
+            position: relative;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+        }
+        .controls {
+            margin: 15px 0;
+        }
+        button {
+            padding: 8px 16px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            border: none;
+            border-radius: 5px;
+            background: #3498db;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        .legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>R1aB6 与 H1N1 HA 结合界面 3D 交互图</h2>
+<p>拖动旋转 · 滚轮缩放 · 点击高亮按钮查看关键残基与相互作用</p>
+
+<div class="controls">
+    <button onclick="showCartoon()">卡通模式</button>
+    <button onclick="showStick()">棍状模式</button>
+    <button onclick="showInterface()">高亮界面残基</button>
+    <button onclick="showHbonds()">显示氢键</button>
+    <button onclick="showSaltBridges()">显示盐桥</button>
+    <button onclick="showHydrophobic()">显示疏水接触</button>
+    <button onclick="resetView()">重置视角</button>
+</div>
+
+<div id="viewer"></div>
+
+<div class="legend">
+    <div class="legend-item">
+        <div class="legend-color" style="background:grey;"></div>
+        <span>H1N1 HA（链 A）</span>
+    </div>
+    <div class="legend-item">
+        <div class="legend-color" style="background:steelblue;"></div>
+        <span>R1aB6（链 B）</span>
+    </div>
+    <div class="legend-item">
+        <div class="legend-color" style="background:blue;"></div>
+        <span>氢键</span>
+    </div>
+    <div class="legend-item">
+        <div class="legend-color" style="background:red;"></div>
+        <span>盐桥</span>
+    </div>
+    <div class="legend-item">
+        <div class="legend-color" style="background:orange;"></div>
+        <span>疏水接触</span>
+    </div>
+</div>
+
+<script>
+    let viewer = $3Dmol.createViewer("viewer", {
+        backgroundColor: "white"
+    });
+
+    let hbondLines = [];
+    let saltLines = [];
+    let hydrophobicLines = [];
+
+    // ============================================================
+    // 加载 PDB 文件
+    // 如果你的 PDB 文件名不同，请修改下面的路径
+    // ============================================================
+    $3Dmol.download("url:R1aB6_H1N1_complex.pdb", viewer, {}, function() {
+
+        // 链 A（HA）灰色卡通
+        viewer.setStyle({chain: 'A'}, {cartoon: {color: 'grey'}});
+        // 链 B（R1aB6）蓝色卡通
+        viewer.setStyle({chain: 'B'}, {cartoon: {color: 'steelblue'}});
+
+        viewer.zoomTo();
+        viewer.render();
+
+        // 预先计算并保存相互作用线（默认隐藏）
+        setupInteractions();
+    });
+
+    // ============================================================
+    // 界面残基高亮
+    // ============================================================
+    function showInterface() {
+        // R1aB6 核心热点残基（红棍）
+        viewer.addStyle({chain: 'B', resi: [31, 54, 55]}, 
+            {stick: {color: 'red', radius: 0.15}});
+        // HA 关键界面残基（黄棍）
+        viewer.addStyle({chain: 'A', resi: [27, 29, 30, 31, 44, 51, 53]}, 
+            {stick: {color: 'gold', radius: 0.15}});
+        viewer.render();
+    }
+
+    // ============================================================
+    // 相互作用线（根据 SPICE 结果手动添加）
+    // 格式：addLine(原子1, 原子2, 样式)
+    // ============================================================
+    function setupInteractions() {
+
+        // ----- 氢键（蓝色虚线）-----
+        // ARG-B:31 ↔ ASN-A:27
+        hbondLines.push(viewer.addLine(
+            {chain: 'B', resi: 31, atom: 'NH1'},
+            {chain: 'A', resi: 27, atom: 'OD1'},
+            {color: 'blue', dashed: true, linewidth: 2}
+        ));
+        // ARG-B:31 ↔ SER-A:29
+        hbondLines.push(viewer.addLine(
+            {chain: 'B', resi: 31, atom: 'NH1'},
+            {chain: 'A', resi: 29, atom: 'OG'},
+            {color: 'blue', dashed: true, linewidth: 2}
+        ));
+        // ARG-B:31 ↔ THR-A:44
+        hbondLines.push(viewer.addLine(
+            {chain: 'B', resi: 31, atom: 'NH1'},
+            {chain: 'A', resi: 44, atom: 'OG1'},
+            {color: 'blue', dashed: true, linewidth: 2}
+        ));
+        // ARG-B:31 ↔ GLN-A:51
+        hbondLines.push(viewer.addLine(
+            {chain: 'B', resi: 31, atom: 'NH1'},
+            {chain: 'A', resi: 51, atom: 'OE1'},
+            {color: 'blue', dashed: true, linewidth: 2}
+        ));
+        // ASP-B:55 ↔ THR-A:30
+        hbondLines.push(viewer.addLine(
+            {chain: 'B', resi: 55, atom: 'OD1'},
+            {chain: 'A', resi: 30, atom: 'OG1'},
+            {color: 'blue', dashed: true, linewidth: 2}
+        ));
+
+        // ----- 盐桥（红色实线）-----
+        // THR-B:54 ↔ ASP-A:31
+        saltLines.push(viewer.addLine(
+            {chain: 'B', resi: 54, atom: 'OG1'},
+            {chain: 'A', resi: 31, atom: 'OD1'},
+            {color: 'red', dashed: false, linewidth: 3}
+        ));
+
+        // ----- 疏水接触（橙色虚线）-----
+        // 示例：ALA-B:49 ↔ ALA-A:52
+        hydrophobicLines.push(viewer.addLine(
+            {chain: 'B', resi: 49, atom: 'CB'},
+            {chain: 'A', resi: 52, atom: 'CB'},
+            {color: 'orange', dashed: true, linewidth: 1.5}
+        ));
+
+        // 默认隐藏，点击按钮才显示
+        hbondLines.forEach(l => l.hidden = true);
+        saltLines.forEach(l => l.hidden = true);
+        hydrophobicLines.forEach(l => l.hidden = true);
+
+        viewer.render();
+    }
+
+    // ============================================================
+    // 显示/隐藏相互作用线
+    // ============================================================
+    function showHbonds() {
+        let visible = hbondLines[0].hidden;
+        hbondLines.forEach(l => l.hidden = !visible);
+        viewer.render();
+    }
+
+    function showSaltBridges() {
+        let visible = saltLines[0].hidden;
+        saltLines.forEach(l => l.hidden = !visible);
+        viewer.render();
+    }
+
+    function showHydrophobic() {
+        let visible = hydrophobicLines[0].hidden;
+        hydrophobicLines.forEach(l => l.hidden = !visible);
+        viewer.render();
+    }
+
+    // ============================================================
+    // 视图模式切换
+    // ============================================================
+    function showCartoon() {
+        viewer.setStyle({}, {cartoon: {color: 'spectrum'}});
+        viewer.render();
+    }
+
+    function showStick() {
+        viewer.setStyle({}, {stick: {radius: 0.08}});
+        viewer.render();
+    }
+
+    function resetView() {
+        viewer.setStyle({chain: 'A'}, {cartoon: {color: 'grey'}});
+        viewer.setStyle({chain: 'B'}, {cartoon: {color: 'steelblue'}});
+        viewer.zoomTo();
+        viewer.render();
+    }
+</script>
+
+</body>
+</html>
